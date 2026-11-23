@@ -1,0 +1,84 @@
+name: Mirror With Tag
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag: 
+        description: 'Existing tag to re-mirror'
+        type: string
+        required: true
+  workflow_call:
+    inputs:
+      tag:
+        required: true
+        type: string
+
+env:
+  TAG: ${{ inputs.tag || github.ref_name }}
+
+permissions:
+  contents: write
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          fetch-depth: 1
+
+      - name: Setup Environment
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y --no-install-recommends \
+          curl wget
+
+      - name: Derive version
+        id: ver
+        run: |
+          CLEAN="${TAG#v}"
+          echo "clean=$CLEAN" | tee "$GITHUB_OUTPUT"
+
+      - name: Fetching jdtls ${{ steps.ver.outputs.clean }}
+        id: fetch
+        env:
+          VERSION: ${{ steps.ver.outputs.clean }}
+        run: |
+          . fetch_jdtls.sh "${VERSION}"
+
+          echo Writing the variables of manifest into GITHUB_OUTPUT
+
+          cat >> "$GITHUB_OUTPUT" <<EOF
+          JDTLS_URL=$JDTLS_DOWNLOAD_URL
+          JDTLS_HASH_URL=$JDTLS_HASH_URL
+          JDTLS_DOWNLOAD_PAGE=https://download.eclipse.org/jdtls/milestones/$VERSION
+          EOF
+
+          mkdir dist -p
+          cd dist
+          echo fetching its hash from "${JDTLS_HASH_URL}"
+          curl -O "${JDTLS_HASH_URL}"
+          wget -O "${JDTLS_OUTPUT}" "${JDTLS_DOWNLOAD_URL}"
+          [ "$(sha256sum < ${JDTLS_OUTPUT} | awk '{print $1}' )" = "$(cat ${JDTLS_HASH_OUTPUT})" ] && echo Pass sha256 check
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v3.0.4
+        with:
+          tag_name: ${{ env.TAG }}
+          files: dist/*
+          generate_release_notes: false
+          body: |
+            # Jdtls ${{ steps.ver.outputs.clean }}
+
+            Mirroring from [Eclipse](https://download.eclipse.org/jdtls/milestones)
+
+            ## **Source Links** 
+
+            - [Jdtls](${{ steps.fetch.outputs.JDTLS_URL }})
+            - [Jdtls Hash](${{ steps.fetch.outputs.JDTLS_HASH_URL }})
+            - [Eclipse Official Download Page](${{ steps.fetch.outputs.JDTLS_DOWNLOAD_PAGE }})
+
