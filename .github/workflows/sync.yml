@@ -43,8 +43,8 @@ jobs:
             git tag "$TAG" -m "CI auto tag $TAG"
             TAGS="$TAGS $TAG"
           done
-          git push origin $TAGS
-          echo $TAGS
+          echo "Tags are $TAGS"
+          [ -n "$TAGS" ] && git push origin $TAGS
           echo "tags=$TAGS" >> "$GITHUB_OUTPUT"
   find-matrix:
     needs: sync
@@ -58,12 +58,14 @@ jobs:
           JSON="["
           for TAG in $TAGS
           do
-            JSON="$JSON{\"tag\":\"$TAG\"},"
+            [ "$JSON" != "[" ] && JSON="$JSON,"
+            JSON="$JSON{\"tag\":\"$TAG\"}"
           done
           JSON="$JSON]"
           echo "matrix={\"include\":$JSON}" >> "$GITHUB_OUTPUT"
   mirror:
     needs: find-matrix
+    if: fromJSON(needs.find-matrix.outputs.matrix).include[0] != null
     strategy:
       matrix: ${{ fromJSON(needs.find-matrix.outputs.matrix) }}
       fail-fast: false
