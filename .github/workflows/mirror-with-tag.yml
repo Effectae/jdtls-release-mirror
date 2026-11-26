@@ -61,7 +61,7 @@ jobs:
           mkdir dist -p
           cd dist
           echo fetching its hash from "${JDTLS_HASH_URL}"
-          curl -O "${JDTLS_HASH_URL}"
+          curl -f -O "${JDTLS_HASH_URL}"
           wget -O "${JDTLS_OUTPUT}" "${JDTLS_DOWNLOAD_URL}"
           [ "$(sha256sum < ${JDTLS_OUTPUT} | awk '{print $1}' )" = "$(cat ${JDTLS_HASH_OUTPUT})" ] && echo Pass sha256 check
 

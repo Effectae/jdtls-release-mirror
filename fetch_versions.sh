@@ -8,7 +8,7 @@ fetch_download_page()
 {
     local MANIFEST_PATH="${TMP}/milestones"
     # cache the manifest
-    [[ -e "$MANIFEST_PATH" ]] || curl 'https://download.eclipse.org/jdtls/milestones/' -o "${MANIFEST_PATH}"
+    [[ -e "$MANIFEST_PATH" ]] || curl -f 'https://download.eclipse.org/jdtls/milestones/' -o "${MANIFEST_PATH}"
     cat "${MANIFEST_PATH}"
 }
 

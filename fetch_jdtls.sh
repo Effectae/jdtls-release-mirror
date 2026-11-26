@@ -8,7 +8,7 @@ echo Fetching... $VERSION
 
 TMP="$(mktemp)"
 
-curl -o "${TMP}" \
+curl -f -o "${TMP}" \
     "https://download.eclipse.org/jdtls/milestones/${VERSION}/"
 
 export JDTLS_DOWNLOAD_URL=$(cat "${TMP}" | \
