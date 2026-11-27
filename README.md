@@ -1,7 +1,7 @@
-# Overview
+## Overview
 
-This is a project to mirror the release of eclipse jdtls from official download site.
+This project mirrors Eclipse JDT LS releases from the official download site and syncs daily.
 
-# How does it work
+## How does it work
 
-It uses the Github Action to download release then publish it at the release page.
+It uses GitHub Actions to download releases and publish them on the Releases page.
